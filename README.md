@@ -56,7 +56,7 @@ Instead it uses two digital pins to create a serial one-way connection using [bi
 The EN pin is tied high to keep the chip enabled.
 The constructor for this wiring is `Siner_ADF4351(int pinLoad, int pinClock, int pinData)`.
 
-### Wiring 3: bit banging serial with LE
+### Wiring 4: bit banging serial with LE
 
 Arduino Pin | ADF4351 Pin
 ------------|------------
