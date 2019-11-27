@@ -223,6 +223,8 @@ bool Siner_ADF4351::computeRegisterValues() {
   } else if (outputPower >= -1) {
     outputPowerVal = 1;
 	outputPower = -1;
+  } else {
+	outputPower = -4;  
   }
   
   // Determine correct aux power register value
@@ -236,6 +238,8 @@ bool Siner_ADF4351::computeRegisterValues() {
   } else if (auxPower >= -1) {
     auxPowerVal = 1;
 	auxPower = -1;
+  } else {
+	auxPower = -4;
   }
 
   // Register 0
