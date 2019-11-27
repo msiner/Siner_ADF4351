@@ -74,3 +74,7 @@ The constructor for this wiring is `Siner_ADF4351(int pinEnable, int pinLoad, in
 ### simple
 
 The "simple" example programs the chip to a single frequency in setup() and then does nothing in loop().
+
+### serial_sig_gen
+
+This example implements runtime control of the synthesizer frequency, power, and output enable via serial text commands.
