@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <SPI.h>
 #include <Adafruit_NeoPixel.h>
 #include <Siner_ADF4351.h>
@@ -14,21 +15,40 @@ static const int PIN_ADF4351_LE = 3;
 Siner_ADF4351 synth = Siner_ADF4351(PIN_ADF4351_EN, PIN_ADF4351_LE, SPI);
 
 static char cmdBuf[32];
+static char* startPtr = NULL;
+static char* endPtr = NULL;
 static bool synthEnabled = false;
 
+
 void setup() {
+  // The synth uses SPI, so call its begin() first
   SPI.begin();
-  
+
+  // Initialize the synth instance
   synth.begin();
-  
+
+  // This will raise the EN pin to enable the chip
   synth.enable();
 
+  // Many of the cheap AD4351 boards use a 25 MHz crystal, but
+  // this needs to change if you are using an external 10 MHz
+  // or your board has a different crystal.
+  synth.referenceHz = 25000000;
+
+  // Disable the RF output to start
   synth.outputEnable = false;
-  synth.outputPower = 0;
+
+  // Configure the output frequency
   synth.frequencyHz = 920000000;
 
+  // Enable the primary RF output
+  synth.outputEnable = true;
+
+  // program() will determine the correct register values and
+  // then write them to the chip.
   synth.program();
   
+  // Wait for user to connect via serial (Serial Monitor in Arduino IDE)
   Serial.begin(9600);
   while (!Serial) {}
 
@@ -51,7 +71,7 @@ void printStatus() {
   Serial.print("ENAB:");
   Serial.println((int)synthEnabled);
   Serial.print("FREQ:");
-  Serial.println(synth.actualFrequencyHz);
+  Serial.println(synth.frequencyHz);
   Serial.print("OUTP:");
   Serial.println(synth.outputEnable);
   Serial.print("POWE:");
@@ -71,10 +91,16 @@ void printRegs() {
 
 void loop() {
   size_t numBytes = Serial.readBytesUntil('\n', cmdBuf, sizeof(cmdBuf) - 1);
-  if (numBytes < 4) {
+  if (numBytes == 0) {
+    return;
+  } else if (numBytes < 4) {
+    Serial.println("ERROR: invalid input");
     return;
   }
+  
+  // Null-terminate the buffer
   cmdBuf[numBytes] = 0;
+
   if (!strncmp("HELP", cmdBuf, 4)) {
     printHelp();
   } else if (!strncmp("STAT", cmdBuf, 4)) {
@@ -84,17 +110,48 @@ void loop() {
   } else if (!strncmp("ENAB", cmdBuf, 4)) {
     synth.enable();
     synthEnabled = true;
+    Serial.print("ENAB");
   } else if (!strncmp("DISA", cmdBuf, 4)) {
     synth.disable();
     synthEnabled = false;
+    Serial.print("DISA");
   } else if (!strncmp("FREQ", cmdBuf, 4)) {
-    synth.frequencyHz = strtoul(cmdBuf + 4, NULL, 10);
-    synth.program();
+    errno = 0;
+    startPtr = cmdBuf + 4;
+    uint32_t tmp = strtoul(startPtr, &endPtr, 10);
+    if (errno == 0 && endPtr != startPtr) {
+      synth.frequencyHz = tmp;
+      synth.program();
+      Serial.print("FREQ:");
+      Serial.println(synth.frequencyHz);
+    } else {
+      Serial.println("ERROR: invalid argument");
+    }
   } else if (!strncmp("OUTP", cmdBuf, 4)) {
-    synth.outputEnable = strtoul(cmdBuf + 4, NULL, 10);
-    synth.program();
+    errno = 0;
+    startPtr = cmdBuf + 4;
+    bool tmp = strtoul(startPtr, &endPtr, 10);
+    if (errno == 0 && endPtr != startPtr) {
+      synth.outputEnable = tmp;
+      synth.program();
+      Serial.print("OUTP:");
+      Serial.println(synth.outputEnable);
+    } else {
+      Serial.println("ERROR: invalid argument");
+    }
   } else if (!strncmp("POWE", cmdBuf, 4)) {
-    synth.outputPower = strtol(cmdBuf + 4, NULL, 10);
-    synth.program();
+    errno = 0;
+    startPtr = cmdBuf + 4;
+    int8_t tmp = strtol(startPtr, &endPtr, 10);
+    if (errno == 0 && endPtr != startPtr) {
+      synth.outputPower = tmp;
+      synth.program();
+      Serial.print("POWE:");
+      Serial.println(synth.outputPower);
+    } else {
+      Serial.println("ERROR: invalid argument");
+    }
+  } else {
+    Serial.println("ERROR: unrecognized command");
   }
 }

@@ -32,7 +32,6 @@ class Siner_ADF4351 {
 
 public:
   uint32_t frequencyHz = 0;
-  uint32_t actualFrequencyHz = 0;
   uint32_t referenceHz = 25000000;
   bool outputEnable = true;
   int8_t outputPower = -4;

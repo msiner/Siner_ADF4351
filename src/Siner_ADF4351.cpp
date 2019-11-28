@@ -34,17 +34,17 @@ static uint32_t binaryGCD(uint32_t u, uint32_t v)
 
   /* GCD(0,v) == v; GCD(u,0) == u, GCD(0,0) == 0 */
   if (u == 0) {
-	return v;
+    return v;
   }
   if (v == 0) {
-	return u;
+    return u;
   }
  
   /* Let shift := lg K, where K is the greatest power of 2
         dividing both u and v. */
   for (shift = 0; ((u | v) & 1) == 0; ++shift) {
     u >>= 1;
-	v >>= 1;
+    v >>= 1;
   }
  
   while ((u & 1) == 0) {
@@ -54,20 +54,20 @@ static uint32_t binaryGCD(uint32_t u, uint32_t v)
   /* From here on, u is always odd. */
   uint32_t temp = 0;
   do {
-	/* remove all factors of 2 in v -- they are not common */
+    /* remove all factors of 2 in v -- they are not common */
     /*   note: v is not zero, so while will terminate */
     while ((v & 1) == 0) {  /* Loop X */
-		v >>= 1;
-	}
+      v >>= 1;
+    }
 
     /* Now u and v are both odd. Swap if necessary so u <= v,
-	then set v = v - u (which is even). For bignums, the
+    then set v = v - u (which is even). For bignums, the
     swapping is just pointer movement, and the subtraction
     can be done in-place. */
     if (u > v) {
-		temp = v;
-		v = u;
-		u = temp; // Swap u and v.
+      temp = v;
+      v = u;
+      u = temp; // Swap u and v.
     }
        
     v = v - u; // Here v >= u.
@@ -150,10 +150,10 @@ bool Siner_ADF4351::computeRegisterValues() {
   // calculations done here are simple and non-iterative.
   uint32_t tenKHzUnits = frequencyHz / 10000;
   uint32_t tenKHzRem = frequencyHz % 10000;
-  actualFrequencyHz = 10000 * (tenKHzUnits + (tenKHzRem >= 5000));
+  frequencyHz = 10000 * (tenKHzUnits + (tenKHzRem >= 5000));
 
   // Determine prescaler
-  if (actualFrequencyHz > 3600000000) {
+  if (frequencyHz > 3600000000) {
     // prescaler is 8/9
     newRegisters[1] |= 1 << 27;
   } else {
@@ -171,7 +171,7 @@ bool Siner_ADF4351::computeRegisterValues() {
   }
 
   // Get the freq to pfd ratio in whole steps
-  uint32_t ratio = actualFrequencyHz / pfdHz;
+  uint32_t ratio = frequencyHz / pfdHz;
 
   // Determine the correct DIV value.
   // We do this first because DIV is the most constrained parameter.
@@ -179,7 +179,7 @@ bool Siner_ADF4351::computeRegisterValues() {
   // The internal VOSC has a minimum freq of 2.2 GHz.
   // So we need to find the smallest DIV that can get up to 2.2 GHz.
   // Remember, 'ratio' is in whole steps.
-  // So ratio * pfdHz does not necessarily equal actualFrequencyHz.
+  // So ratio * pfdHz does not necessarily equal frequencyHz.
   uint32_t minDiv = 2200000000 / (ratio * pfdHz);
   // Walk through the bank of valid DIV values until we find the
   // smallest one that is greater than the minimum.
@@ -188,7 +188,7 @@ bool Siner_ADF4351::computeRegisterValues() {
       // The DIV value in the register matches the bank index.
       // That is, we want the index, not the actual value.
       rfDiv = divId;
-	  break;
+      break;
     }
   }
 
@@ -197,9 +197,9 @@ bool Siner_ADF4351::computeRegisterValues() {
   uint32_t rfDivVal = divBank[rfDiv];
   // INT is the easiest to solve for now that we have DIV.
   // Just solve for the whole steps.
-  uint32_t nInt = (rfDivVal * actualFrequencyHz) / pfdHz;
+  uint32_t nInt = (rfDivVal * frequencyHz) / pfdHz;
   // To solve FRAC and MOD, we need to use the remainder that INT leaves.
-  uint32_t nRem = (rfDivVal * actualFrequencyHz) % pfdHz;
+  uint32_t nRem = (rfDivVal * frequencyHz) % pfdHz;
   // Reduce the fraction nRem/pfdHz by solving for the GCD.
   // Reducing the fraction gets FRAC and MOD values in the correct range.
   uint32_t gcdVal = binaryGCD(nRem, pfdHz);
@@ -215,31 +215,31 @@ bool Siner_ADF4351::computeRegisterValues() {
   // Determine correct output power register value
   uint32_t outputPowerVal = 0;
   if (outputPower >= 5) {
-	outputPowerVal = 3;
-	outputPower = 5;
+    outputPowerVal = 3;
+    outputPower = 5;
   } else if (outputPower >= 2) {
-	outputPowerVal = 2;
-	outputPower = 2;
+    outputPowerVal = 2;
+    outputPower = 2;
   } else if (outputPower >= -1) {
     outputPowerVal = 1;
-	outputPower = -1;
+    outputPower = -1;
   } else {
-	outputPower = -4;  
+    outputPower = -4;  
   }
   
   // Determine correct aux power register value
   uint32_t auxPowerVal = 0;
   if (auxPower >= 5) {
-	auxPowerVal = 3;
-	auxPower = 5;
+    auxPowerVal = 3;
+    auxPower = 5;
   } else if (auxPower >= 2) {
-	auxPowerVal = 2;
-	auxPower = 2;
+    auxPowerVal = 2;
+    auxPower = 2;
   } else if (auxPower >= -1) {
     auxPowerVal = 1;
-	auxPower = -1;
+    auxPower = -1;
   } else {
-	auxPower = -4;
+    auxPower = -4;
   }
 
   // Register 0
