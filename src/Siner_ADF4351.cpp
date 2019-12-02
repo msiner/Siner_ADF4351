@@ -22,60 +22,7 @@ SOFTWARE.
 
 
 #include "Siner_ADF4351.h"
-
-
-/*
-The following code was taken from Wikipedia
-https://en.wikipedia.org/wiki/Binary_GCD_algorithm
-*/
-static uint32_t binaryGCD(uint32_t u, uint32_t v)
-{
-  uint32_t shift;
-
-  /* GCD(0,v) == v; GCD(u,0) == u, GCD(0,0) == 0 */
-  if (u == 0) {
-    return v;
-  }
-  if (v == 0) {
-    return u;
-  }
- 
-  /* Let shift := lg K, where K is the greatest power of 2
-        dividing both u and v. */
-  for (shift = 0; ((u | v) & 1) == 0; ++shift) {
-    u >>= 1;
-    v >>= 1;
-  }
- 
-  while ((u & 1) == 0) {
-    u >>= 1;
-  }
- 
-  /* From here on, u is always odd. */
-  uint32_t temp = 0;
-  do {
-    /* remove all factors of 2 in v -- they are not common */
-    /*   note: v is not zero, so while will terminate */
-    while ((v & 1) == 0) {  /* Loop X */
-      v >>= 1;
-    }
-
-    /* Now u and v are both odd. Swap if necessary so u <= v,
-    then set v = v - u (which is even). For bignums, the
-    swapping is just pointer movement, and the subtraction
-    can be done in-place. */
-    if (u > v) {
-      temp = v;
-      v = u;
-      u = temp; // Swap u and v.
-    }
-       
-    v = v - u; // Here v >= u.
-  } while (v != 0);
-
-  /* restore common factors of 2 */
-  return u << shift;
-}
+#include "binary_gcd.h"
 
 
 Siner_ADF4351::Siner_ADF4351(int pinLoad, SPIClass& spi) :
@@ -202,7 +149,7 @@ bool Siner_ADF4351::computeRegisterValues() {
   uint32_t nRem = (rfDivVal * frequencyHz) % pfdHz;
   // Reduce the fraction nRem/pfdHz by solving for the GCD.
   // Reducing the fraction gets FRAC and MOD values in the correct range.
-  uint32_t gcdVal = binaryGCD(nRem, pfdHz);
+  uint32_t gcdVal = binary_gcd(nRem, pfdHz);
   uint32_t frac = nRem / gcdVal;
   uint32_t mod = pfdHz / gcdVal;
 
