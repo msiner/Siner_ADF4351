@@ -26,21 +26,17 @@ SOFTWARE.
 #include <Adafruit_NeoPixel.h>
 #include <Siner_ADF4351.h>
 
-// At a minimum, we need to specify a load-enable (LE) pin,
-// but here we also specify the enable (EN) pin.
-// If the EN pin is not connected, it needs to be tied high.
-// These must match your own wiring.
-static const int PIN_ADF4351_EN = 2;
-static const int PIN_ADF4351_LE = 3;
 
-// Create a single instance using the pins specified above
-// and the SPI object.
-Siner_ADF4351 synth = Siner_ADF4351(PIN_ADF4351_EN, PIN_ADF4351_LE, SPI);
+static const int PIN_ADF4351_CE = 2; // chip enable (CE)
+static const int PIN_ADF4351_LE = 3; // load enable (LE)
+
+// Create a synth instance that uses default SPI instance for
+// serial communication with the chip
+Siner_ADF4351 synth = Siner_ADF4351(PIN_ADF4351_LE, SPI);
 
 static char cmdBuf[32];
 static char* startPtr = NULL;
 static char* endPtr = NULL;
-static bool synthEnabled = false;
 
 
 void setup() {
@@ -51,9 +47,10 @@ void setup() {
   synth.begin();
 
   // This will raise the EN pin to enable the chip
-  synth.enable();
+  pinMode(PIN_ADF4351_CE, OUTPUT);
+  digitalWrite(PIN_ADF4351_CE, HIGH);
 
-  // Many of the cheap AD4351 boards use a 25 MHz crystal, but
+  // Many of the cheap ADF4351 boards use a 25 MHz crystal, but
   // this needs to change if you are using an external 10 MHz
   // or your board has a different crystal.
   synth.referenceHz = 25000000;
@@ -81,10 +78,9 @@ void setup() {
 
 void printHelp() {
   Serial.println("HELP: print this help message");
-  Serial.println("STAT: print current synth status");
-  Serial.println("REGS: print current synth register values");
-  Serial.println("ENAB: set the synth enable pin high");
-  Serial.println("DISA: set the synth enable pin high");
+  Serial.println("STAT: print synth status");
+  Serial.println("REGS: print synth register values");
+  Serial.println("ENAB (0|1): set the synth enable pin high");
   Serial.println("FREQ freqHz: set the frequency");
   Serial.println("OUTP (0|1): set the output enable");
   Serial.println("POWE dbPower: set the output power");
@@ -92,7 +88,7 @@ void printHelp() {
 
 void printStatus() {
   Serial.print("ENAB:");
-  Serial.println((int)synthEnabled);
+  Serial.println(digitalRead(PIN_ADF4351_CE));
   Serial.print("FREQ:");
   Serial.println(synth.frequencyHz);
   Serial.print("OUTP:");
@@ -131,13 +127,20 @@ void loop() {
   } else if (!strncmp("REGS", cmdBuf, 4)) {
     printRegs();
   } else if (!strncmp("ENAB", cmdBuf, 4)) {
-    synth.enable();
-    synthEnabled = true;
-    Serial.print("ENAB");
-  } else if (!strncmp("DISA", cmdBuf, 4)) {
-    synth.disable();
-    synthEnabled = false;
-    Serial.print("DISA");
+    errno = 0;
+    startPtr = cmdBuf + 4;
+    bool tmp = strtoul(startPtr, &endPtr, 10);
+    if (errno == 0 && endPtr != startPtr) {
+      if (tmp) {
+        digitalWrite(PIN_ADF4351_CE, HIGH);
+      } else {
+        digitalWrite(PIN_ADF4351_CE, LOW);
+      }
+      Serial.print("ENAB:");
+      Serial.println(tmp);
+    } else {
+      Serial.println("ERROR: invalid argument");
+    }
   } else if (!strncmp("FREQ", cmdBuf, 4)) {
     errno = 0;
     startPtr = cmdBuf + 4;

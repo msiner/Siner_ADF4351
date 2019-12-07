@@ -28,16 +28,12 @@ SOFTWARE.
 // On setup, the synth will be programmed with this frequency.
 static const uint32_t FREQUENCY_HZ = 920000000;
 
-// At a minimum, we need to specify a load-enable (LE) pin,
-// but here we also specify the enable (EN) pin.
-// If the EN pin is not connected, it needs to be tied high.
-// These must match your own wiring.
-static const int PIN_ADF4351_EN = 2;
-static const int PIN_ADF4351_LE = 3;
+static const int PIN_ADF4351_CE = 2; // chip enable (CE)
+static const int PIN_ADF4351_LE = 3; // load enable (LE)
 
-// Create a single instance using the pins specified above
-// and the SPI object.
-Siner_ADF4351 synth = Siner_ADF4351(PIN_ADF4351_EN, PIN_ADF4351_LE, SPI);
+// Create a synth instance that uses default SPI instance for
+// serial communication with the chip
+Siner_ADF4351 synth = Siner_ADF4351(PIN_ADF4351_LE, SPI);
 
 
 void setup() {
@@ -48,9 +44,10 @@ void setup() {
   synth.begin();
 
   // This will raise the EN pin to enable the chip
-  synth.enable();
+  pinMode(PIN_ADF4351_CE, OUTPUT);
+  digitalWrite(PIN_ADF4351_CE, HIGH);
 
-  // Many of the cheap AD4351 boards use a 25 MHz crystal, but
+  // Many of the cheap ADF4351 boards use a 25 MHz crystal, but
   // this needs to change if you are using an external 10 MHz
   // or your board has a different crystal.
   synth.referenceHz = 25000000;
