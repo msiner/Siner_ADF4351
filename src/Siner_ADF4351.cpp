@@ -31,19 +31,8 @@ Siner_ADF4351::Siner_ADF4351(int pinLoad, SPIClass& spi) :
 
 }
 
-Siner_ADF4351::Siner_ADF4351(int pinEnable, int pinLoad, SPIClass& spi) :
-  pinEnable(pinEnable), pinLoad(pinLoad), spi(&spi) 
-{
-
-}
-
 Siner_ADF4351::Siner_ADF4351(int pinLoad, int pinClock, int pinData) :
-  pinEnable(pinEnable), pinLoad(pinLoad),  pinClock(pinClock), pinData(pinData) 
-{
-
-}
-Siner_ADF4351::Siner_ADF4351(int pinEnable, int pinLoad, int pinClock, int pinData) :
-  pinEnable(pinEnable), pinLoad(pinLoad),  pinClock(pinClock), pinData(pinData) 
+  pinLoad(pinLoad),  pinClock(pinClock), pinData(pinData) 
 {
 
 }
@@ -55,24 +44,9 @@ Siner_ADF4351::~Siner_ADF4351() {
 void Siner_ADF4351::begin() {
   // Configure the direction of any specified pins
   pinMode(pinLoad, OUTPUT);
-  if (pinEnable >= 0) {
-    pinMode(pinEnable, OUTPUT);
-  }
   if (pinClock >= 0) {
     pinMode(pinClock, OUTPUT);
     pinMode(pinData, OUTPUT);
-  }
-}
-
-void Siner_ADF4351::enable() {
-  if (pinEnable >= 0) {
-    digitalWrite(pinEnable, HIGH);
-  }
-}
-
-void Siner_ADF4351::disable() {
-  if (pinEnable >= 0) {
-    digitalWrite(pinEnable, LOW);
   }
 }
 

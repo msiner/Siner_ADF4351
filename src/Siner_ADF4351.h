@@ -46,21 +46,16 @@ public:
   uint32_t registers[6] = {0xFFFFFFFF};
 
   Siner_ADF4351(int pinLoad, SPIClass& spi);
-  Siner_ADF4351(int pinEnable, int pinLoad, SPIClass& spi);
   Siner_ADF4351(int pinLoad, int pinClock, int pinData);
-  Siner_ADF4351(int pinEnable, int pinLoad, int pinClock, int pinData);
   ~Siner_ADF4351(void);
 
   void begin(void);
-  void enable(void);
-  void disable(void);
   bool computeRegisterValues(void);
   void writeRegister(uint32_t regVal);
   void writeRegisters(void);
   bool program(void);
 
 protected:
-  int pinEnable = -1;
   int pinLoad = -1;
   int pinClock = -1;
   int pinData = -1;
