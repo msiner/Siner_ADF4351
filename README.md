@@ -14,7 +14,7 @@ There are other implementations available, but I had a few reasons for implement
 ## Wiring
 
 The microcontroller writes ADF4351 registers using a one-way serial protocol.
-This library accomodates a two different wirings of the serial pins.
+This library accomodates two different wirings of the serial pins.
 Each wiring corresponds to a different constructor for the Siner_ADF4351 class.
 
 ### Wiring 1: Arduino SPI
