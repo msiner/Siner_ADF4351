@@ -76,10 +76,10 @@ bool Siner_ADF4351::computeRegisterValues() {
   // Determine prescaler
   if (frequencyHz > 3600000000) {
     // prescaler is 8/9
-    newRegisters[1] |= 1 << 27;
+    resultPrescaler = 1;
   } else {
     // prescaler is 4/5
-    newRegisters[1] &= ~(1 << 27);
+    resultPrescaler = 0;
   }
 
   // Calculate the PFD frequency
@@ -96,7 +96,7 @@ bool Siner_ADF4351::computeRegisterValues() {
 
   // Determine the correct DIV value.
   // We do this first because DIV is the most constrained parameter.
-  uint32_t rfDiv = 0;
+  uint32_t rfDiv = divBankSize - 1;
   // The internal VOSC has a minimum freq of 2.2 GHz.
   // So we need to find the smallest DIV that can get up to 2.2 GHz.
   // Remember, 'ratio' is in whole steps.
@@ -115,22 +115,22 @@ bool Siner_ADF4351::computeRegisterValues() {
 
   // Now that we have solved for DIV, we solve for INT, FRAC, and MOD.
   // Get the actual DIV value being used from the bank.
-  uint32_t rfDivVal = divBank[rfDiv];
+  resultDiv = divBank[rfDiv];
   // INT is the easiest to solve for now that we have DIV.
   // Just solve for the whole steps.
-  uint32_t nInt = (rfDivVal * frequencyHz) / pfdHz;
+  resultInt = (resultDiv * frequencyHz) / pfdHz;
   // To solve FRAC and MOD, we need to use the remainder that INT leaves.
-  uint32_t nRem = (rfDivVal * frequencyHz) % pfdHz;
+  uint32_t nRem = (resultDiv * frequencyHz) % pfdHz;
   // Reduce the fraction nRem/pfdHz by solving for the GCD.
   // Reducing the fraction gets FRAC and MOD values in the correct range.
   uint32_t gcdVal = binary_gcd(nRem, pfdHz);
-  uint32_t frac = nRem / gcdVal;
-  uint32_t mod = pfdHz / gcdVal;
+  resultFrac = nRem / gcdVal;
+  resultMod = pfdHz / gcdVal;
 
   // Determine the correct phase value.
   // The phase value must be <= MOD, but it can still go from 0 to 360 deg.
   // That means the resolution is limited to 360 / MOD
-  uint32_t phaseResolution = 360 / mod;
+  uint32_t phaseResolution = 360 / resultMod;
   uint32_t phaseValue = phaseDegrees / phaseResolution;
   
   // Determine correct output power register value
@@ -164,12 +164,13 @@ bool Siner_ADF4351::computeRegisterValues() {
   }
 
   // Register 0
-  newRegisters[0] |= (nInt & 0xffff) << 15;
-  newRegisters[0] |= (frac & 0xfff) << 3;
+  newRegisters[0] |= (resultInt & 0xffff) << 15;
+  newRegisters[0] |= (resultFrac & 0xfff) << 3;
 
   // Register 1
-  newRegisters[1] |= (mod & 0xfff) << 3;
+  newRegisters[1] |= (resultMod & 0xfff) << 3;
   newRegisters[1] |= (phaseValue & 0xfff) << 15;
+  newRegisters[1] |= (resultPrescaler & 0x1) << 27;
   newRegisters[1] |= (phaseAdjust & 0x1) << 28; 
 
   // Register 2
@@ -208,13 +209,13 @@ bool Siner_ADF4351::computeRegisterValues() {
 
   // Check the values that are double-buffered to see if
   // register 0 needs to be written
-  if ((mod != lastMod) ||
+  if ((resultMod != lastMod) ||
       (phaseValue != lastPhaseValue) ||
       (referenceDouble != lastReferenceDouble) ||
       (referenceDivide != lastReferenceDivide)){
     newRegMask |= 1;
   }
-  lastMod = mod;
+  lastMod = resultMod;
   lastPhaseValue = phaseValue;
   lastReferenceDouble = referenceDouble;
   lastReferenceDivide = referenceDivide;

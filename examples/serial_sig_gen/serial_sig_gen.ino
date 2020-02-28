@@ -32,7 +32,12 @@ static const int PIN_ADF4351_LE = 3; // load enable (LE)
 
 // Create a synth instance that uses default SPI instance for
 // serial communication with the chip
-Siner_ADF4351 synth = Siner_ADF4351(PIN_ADF4351_LE, SPI);
+//Siner_ADF4351 synth = Siner_ADF4351(PIN_ADF4351_LE, SPI);
+
+// Create a synth instance that uses bit-banging SPI
+static const int PIN_ADF4351_DATA = 4; // bit-banging SPI data (DATA)
+static const int PIN_ADF4351_CLK = 5; // bit-baning SPI clock (CLK)
+Siner_ADF4351 synth = Siner_ADF4351(PIN_ADF4351_LE, PIN_ADF4351_CLK, PIN_ADF4351_DATA);
 
 static char cmdBuf[32];
 static char* startPtr = NULL;
@@ -41,7 +46,7 @@ static char* endPtr = NULL;
 
 void setup() {
   // The synth uses SPI, so call its begin() first
-  SPI.begin();
+  //SPI.begin();
 
   // Initialize the synth instance
   synth.begin();
@@ -84,6 +89,7 @@ void printHelp() {
   Serial.println("FREQ freqHz: set the frequency");
   Serial.println("OUTP (0|1): set the output enable");
   Serial.println("POWE dbPower: set the output power");
+  Serial.println("MATH: print the intermediate results");
 }
 
 void printStatus() {
@@ -108,6 +114,23 @@ void printRegs() {
 }
 
 
+void printMath() {
+  if (synth.resultPrescaler) {
+    Serial.println("PRE:8/9");
+  } else {
+    Serial.println("PRE:4/5");
+  }
+  Serial.print("INT:");
+  Serial.println(synth.resultInt);
+  Serial.print("FRAC:");
+  Serial.println(synth.resultFrac);
+  Serial.print("MOD:");
+  Serial.println(synth.resultMod);
+  Serial.print("DIV:");
+  Serial.println(synth.resultDiv);
+}
+
+
 void loop() {
   size_t numBytes = Serial.readBytesUntil('\n', cmdBuf, sizeof(cmdBuf) - 1);
   if (numBytes == 0) {
@@ -126,6 +149,8 @@ void loop() {
     printStatus();
   } else if (!strncmp("REGS", cmdBuf, 4)) {
     printRegs();
+  } else if (!strncmp("MATH", cmdBuf, 4)) {
+    printMath();
   } else if (!strncmp("ENAB", cmdBuf, 4)) {
     errno = 0;
     startPtr = cmdBuf + 4;
