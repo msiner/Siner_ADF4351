@@ -55,4 +55,18 @@ The "simple" example programs the chip to a single frequency in setup() and then
 
 ### serial_sig_gen
 
-This example implements runtime control of the synthesizer frequency, power, and output enable via serial text commands.
+This example implements runtime control of the synthesizer frequency, power, and output enable via serial text commands (shown below).
+
+```
+HELP: print this help message
+STAT: print synth status
+REGS: print synth register values
+ENAB (0|1): set the synth enable pin high
+FREQ freqHz: set the frequency
+OUTP (0|1): set the output enable
+POWE dbPower: set the output power
+INTN (0|1): set integer-N mode
+RDOU (0|1): set reference double
+RDIV (0|1): set reference divide
+MATH: print the intermediate results
+```
