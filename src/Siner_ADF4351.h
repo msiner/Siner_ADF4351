@@ -43,6 +43,7 @@ public:
   uint16_t phaseDegrees = 1;
   bool referenceDouble = false;
   bool referenceDivide = false;
+  bool integerN = false;
   uint32_t registers[6] = {0xFFFFFFFF};
   
   uint32_t resultInt = 0;
@@ -50,6 +51,7 @@ public:
   uint32_t resultFrac = 0;
   uint32_t resultMod = 0;
   uint32_t resultPrescaler = 0;
+  uint32_t resultFrequency = 0;
 
   Siner_ADF4351(int pinLoad, SPIClass& spi);
   Siner_ADF4351(int pinLoad, int pinClock, int pinData);

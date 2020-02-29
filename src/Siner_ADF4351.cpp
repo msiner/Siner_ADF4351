@@ -124,7 +124,13 @@ bool Siner_ADF4351::computeRegisterValues() {
   // Reduce the fraction nRem/pfdHz by solving for the GCD.
   // Reducing the fraction gets FRAC and MOD values in the correct range.
   uint32_t gcdVal = binary_gcd(nRem, pfdHz);
-  resultFrac = nRem / gcdVal;
+  if (integerN) {
+    resultFrac = 0;
+    resultFrequency = resultInt * (referenceHz / resultDiv);
+  } else {
+    resultFrac = nRem / gcdVal;
+    resultFrequency = frequencyHz;
+  }
   resultMod = pfdHz / gcdVal;
 
   // Determine the correct phase value.
@@ -174,6 +180,9 @@ bool Siner_ADF4351::computeRegisterValues() {
   newRegisters[1] |= (phaseAdjust & 0x1) << 28; 
 
   // Register 2
+  if (integerN) {
+    newRegisters[2] |= 1 << 8;
+  }
   newRegisters[2] |= (referenceDivide & 0x1) << 24;
   newRegisters[2] |= (referenceDouble & 0x1) << 25;
 
