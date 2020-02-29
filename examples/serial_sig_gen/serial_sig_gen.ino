@@ -89,6 +89,9 @@ void printHelp() {
   Serial.println("FREQ freqHz: set the frequency");
   Serial.println("OUTP (0|1): set the output enable");
   Serial.println("POWE dbPower: set the output power");
+  Serial.println("INTN (0|1): set integer-N mode");
+  Serial.println("RDOU (0|1): set reference double");
+  Serial.println("RDIV (0|1): set reference divide");
   Serial.println("MATH: print the intermediate results");
 }
 
@@ -96,11 +99,17 @@ void printStatus() {
   Serial.print("ENAB:");
   Serial.println(digitalRead(PIN_ADF4351_CE));
   Serial.print("FREQ:");
-  Serial.println(synth.frequencyHz);
+  Serial.println(synth.resultFrequency);
   Serial.print("OUTP:");
   Serial.println(synth.outputEnable);
   Serial.print("POWE:");
   Serial.println(synth.outputPower);
+  Serial.print("INTN:");
+  Serial.println(synth.integerN);
+  Serial.print("RDOU:");
+  Serial.println(synth.referenceDouble);
+  Serial.print("RDIV:");
+  Serial.println(synth.referenceDivide);
 }
 
 
@@ -120,6 +129,8 @@ void printMath() {
   } else {
     Serial.println("PRE:4/5");
   }
+  Serial.print("PFD:");
+  Serial.println(synth.resultPfdHz);
   Serial.print("INT:");
   Serial.println(synth.resultInt);
   Serial.print("FRAC:");
@@ -128,6 +139,8 @@ void printMath() {
   Serial.println(synth.resultMod);
   Serial.print("DIV:");
   Serial.println(synth.resultDiv);
+  Serial.print("FREQ:");
+  Serial.println(synth.resultFrequency);
 }
 
 
@@ -174,7 +187,7 @@ void loop() {
       synth.frequencyHz = tmp;
       synth.program();
       Serial.print("FREQ:");
-      Serial.println(synth.frequencyHz);
+      Serial.println(synth.resultFrequency);
     } else {
       Serial.println("ERROR: invalid argument");
     }
@@ -199,6 +212,48 @@ void loop() {
       synth.program();
       Serial.print("POWE:");
       Serial.println(synth.outputPower);
+    } else {
+      Serial.println("ERROR: invalid argument");
+    }
+  } else if (!strncmp("INTN", cmdBuf, 4)) {
+    errno = 0;
+    startPtr = cmdBuf + 4;
+    bool tmp = strtoul(startPtr, &endPtr, 10);
+    if (errno == 0 && endPtr != startPtr) {
+      synth.integerN = tmp;
+      synth.program();
+      Serial.print("INTN:");
+      Serial.println(synth.integerN);
+      Serial.print("FREQ:");
+      Serial.println(synth.resultFrequency);
+    } else {
+      Serial.println("ERROR: invalid argument");
+    }
+  } else if (!strncmp("RDOU", cmdBuf, 4)) {
+    errno = 0;
+    startPtr = cmdBuf + 4;
+    bool tmp = strtoul(startPtr, &endPtr, 10);
+    if (errno == 0 && endPtr != startPtr) {
+      synth.referenceDouble = tmp;
+      synth.program();
+      Serial.print("RDOU:");
+      Serial.println(synth.referenceDouble);
+      Serial.print("FREQ:");
+      Serial.println(synth.resultFrequency);
+    } else {
+      Serial.println("ERROR: invalid argument");
+    }
+  } else if (!strncmp("RDIV", cmdBuf, 4)) {
+    errno = 0;
+    startPtr = cmdBuf + 4;
+    bool tmp = strtoul(startPtr, &endPtr, 10);
+    if (errno == 0 && endPtr != startPtr) {
+      synth.referenceDivide = tmp;
+      synth.program();
+      Serial.print("RDIV:");
+      Serial.println(synth.referenceDivide);
+      Serial.print("FREQ:");
+      Serial.println(synth.resultFrequency);
     } else {
       Serial.println("ERROR: invalid argument");
     }

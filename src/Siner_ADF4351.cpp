@@ -83,16 +83,16 @@ bool Siner_ADF4351::computeRegisterValues() {
   }
 
   // Calculate the PFD frequency
-  uint32_t pfdHz = referenceHz;
+  uint32_t resultPfdHz = referenceHz;
   if (referenceDouble) {
-    pfdHz *= 2;
+    resultPfdHz *= 2;
   }
   if (referenceDivide) {
-    pfdHz /= 2;
+    resultPfdHz /= 2;
   }
 
   // Get the freq to pfd ratio in whole steps
-  uint32_t ratio = frequencyHz / pfdHz;
+  uint32_t ratio = frequencyHz / resultPfdHz;
 
   // Determine the correct DIV value.
   // We do this first because DIV is the most constrained parameter.
@@ -100,8 +100,8 @@ bool Siner_ADF4351::computeRegisterValues() {
   // The internal VOSC has a minimum freq of 2.2 GHz.
   // So we need to find the smallest DIV that can get up to 2.2 GHz.
   // Remember, 'ratio' is in whole steps.
-  // So ratio * pfdHz does not necessarily equal frequencyHz.
-  uint32_t minDiv = 2200000000 / (ratio * pfdHz);
+  // So ratio * resultPfdHz does not necessarily equal frequencyHz.
+  uint32_t minDiv = 2200000000 / (ratio * resultPfdHz);
   // Walk through the bank of valid DIV values until we find the
   // smallest one that is greater than the minimum.
   for (int8_t divId = 0; divId < divBankSize; divId++) {
@@ -118,12 +118,12 @@ bool Siner_ADF4351::computeRegisterValues() {
   resultDiv = divBank[rfDiv];
   // INT is the easiest to solve for now that we have DIV.
   // Just solve for the whole steps.
-  resultInt = (resultDiv * frequencyHz) / pfdHz;
+  resultInt = (resultDiv * frequencyHz) / resultPfdHz;
   // To solve FRAC and MOD, we need to use the remainder that INT leaves.
-  uint32_t nRem = (resultDiv * frequencyHz) % pfdHz;
-  // Reduce the fraction nRem/pfdHz by solving for the GCD.
+  uint32_t nRem = (resultDiv * frequencyHz) % resultPfdHz;
+  // Reduce the fraction nRem/resultPfdHz by solving for the GCD.
   // Reducing the fraction gets FRAC and MOD values in the correct range.
-  uint32_t gcdVal = binary_gcd(nRem, pfdHz);
+  uint32_t gcdVal = binary_gcd(nRem, resultPfdHz);
   if (integerN) {
     resultFrac = 0;
     resultFrequency = resultInt * (referenceHz / resultDiv);
@@ -131,7 +131,7 @@ bool Siner_ADF4351::computeRegisterValues() {
     resultFrac = nRem / gcdVal;
     resultFrequency = frequencyHz;
   }
-  resultMod = pfdHz / gcdVal;
+  resultMod = resultPfdHz / gcdVal;
 
   // Determine the correct phase value.
   // The phase value must be <= MOD, but it can still go from 0 to 360 deg.

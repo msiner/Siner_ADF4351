@@ -52,6 +52,7 @@ public:
   uint32_t resultMod = 0;
   uint32_t resultPrescaler = 0;
   uint32_t resultFrequency = 0;
+  uint32_t resultPfdHz = 0;
 
   Siner_ADF4351(int pinLoad, SPIClass& spi);
   Siner_ADF4351(int pinLoad, int pinClock, int pinData);
