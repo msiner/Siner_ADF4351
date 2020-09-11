@@ -28,10 +28,22 @@ SOFTWARE.
 #include <SPI.h>
 
 
+const uint8_t ADF4351_NUM_REGS = 6;
+
+/**
+ * Siner_ADF4351 implements dynamic runtime control of an ADF4351
+ * RF synthesizer.
+ * 
+ * The intended method of operation is to set the public attributes, excluding
+ * the ones with a "result" prefix, to the desired values, and then call
+ * program().
+ **/
 class Siner_ADF4351 {
 
 public:
+  // desired output frequency in Hz
   uint32_t frequencyHz = 0;
+  // reference input frequency in Hz
   uint32_t referenceHz = 25000000;
   bool outputEnable = true;
   int8_t outputPower = -4;
@@ -44,7 +56,7 @@ public:
   bool referenceDouble = false;
   bool referenceDivide = false;
   bool integerN = false;
-  uint32_t registers[6] = {0xFFFFFFFF};
+  uint32_t registers[ADF4351_NUM_REGS] = {0xFFFFFFFF};
   
   uint32_t resultInt = 0;
   uint32_t resultDiv = 0;
@@ -54,7 +66,15 @@ public:
   uint32_t resultFrequency = 0;
   uint32_t resultPfdHz = 0;
 
+  /**
+   * The empty constructor enables use of computeRegisterValues()
+   * without configuring communication to a chip.
+   * In this configuration, writeRegister() is a NOOP.
+   **/
+  Siner_ADF4351(void);
+  // Use built-in SPI peripheral
   Siner_ADF4351(int pinLoad, SPIClass& spi);
+  // Use bit-banged SPI via GPIO pins
   Siner_ADF4351(int pinLoad, int pinClock, int pinData);
   ~Siner_ADF4351(void);
 

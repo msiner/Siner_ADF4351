@@ -25,6 +25,11 @@ SOFTWARE.
 #include "binary_gcd.h"
 
 
+Siner_ADF4351::Siner_ADF4351() 
+{
+
+}
+
 Siner_ADF4351::Siner_ADF4351(int pinLoad, SPIClass& spi) :
   pinLoad(pinLoad), spi(&spi) 
 {
@@ -55,7 +60,7 @@ bool Siner_ADF4351::computeRegisterValues() {
   static const uint8_t divBankSize = 7;
   static const uint32_t divBank[divBankSize] = {1, 2, 4, 8, 16, 32, 64};
   uint8_t newRegMask = 0;
-  uint32_t newRegisters[6] = {
+  uint32_t newRegisters[ADF4351_NUM_REGS] = {
     0x00000000,
     0x00000001,
     0x00004e42,
@@ -229,12 +234,19 @@ bool Siner_ADF4351::computeRegisterValues() {
   lastReferenceDouble = referenceDouble;
   lastReferenceDivide = referenceDivide;
   
-  registerMask = newRegMask;
+  // Or the registers into the mask to support multiple calls to
+  // computeRegisterValues() between calls to writeRegisters()
+  registerMask |= newRegMask;
   return true;
 }
 
 void Siner_ADF4351::writeRegister(uint32_t regVal) {
-  // Cache the register value if it has a valid control field
+  // Skip writing registers if empty constructor was used
+  if (pinLoad == -1) {
+    return;
+  }
+
+  // Cache the register value if it has a valid control field  
   uint32_t regIndex = regVal & 0x7;
   if (regIndex < 6) {
     registers[regIndex] = regVal;
@@ -299,7 +311,7 @@ void Siner_ADF4351::writeRegisters() {
   // Check and write, if necessary, in reverse order
   // to ensure reg 0 is written last to latch in
   // double-buffered values
-  for (int8_t regId = 5; regId >= 0; regId--) {
+  for (int8_t regId = ADF4351_NUM_REGS - 1; regId >= 0; regId--) {
     if ((registerMask >> regId) & 1) {
       writeRegister(registers[regId]);
     }
